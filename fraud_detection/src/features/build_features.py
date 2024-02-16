@@ -104,3 +104,20 @@ class preprocess(BaseEstimator, TransformerMixin):
         df_prep = pd.concat([df_num, df_cat_oh], axis=1)
 
         return df_prep
+    
+# Create a class to return the final pipeline
+class ProcessingPipeline():
+    def __init__(self):
+        self.column_manipulator = ColumnManipulatorDrop()
+        self.feature_engineering = featureEngineering()
+        self.clean_items = CleanItems()
+        self.preprocess = preprocess()
+    
+    def assemble_pipeline(self):
+        pipeline = Pipeline([
+            ('column_manipulator', self.column_manipulator),
+            ('feature_engineering', self.feature_engineering),
+            ('clean_items', self.clean_items),
+            ('preprocess', self.preprocess)
+        ])
+        return pipeline

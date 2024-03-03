@@ -6,6 +6,8 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_
 import xgboost as xgb
 from sklearn.pipeline import Pipeline
 from typing import Tuple, List
+import time
+from pathlib import Path
 
 import os
 import pickle
@@ -73,6 +75,7 @@ class Model:
         self.y_pred_test = model_args['y_pred_test']
         self.y_pred_valid = None
         self.y_true_valid = None
+        self.submission = None
 
     def load_predict_eval(self, EVAL_DATA):
         eval_data = pd.read_csv(EVAL_DATA)
@@ -85,6 +88,22 @@ class Model:
 
         self.y_pred_valid = self.model.predict(X_eval)
         self.y_true_valid = y_eval
+
+    def generate_submission(self, SUBMISSION_DATA, download: bool = False):
+        eval_data = pd.read_csv(SUBMISSION_DATA)
+        
+        X_eval = self.pipe.transform(eval_data)
+        if self.prediction_matrix_type == 'xgb.DMatrix':
+            X_eval = xgb.DMatrix(X_eval)
+
+        self.submission = self.model.predict(X_eval)
+        if download:
+            eval_data['fraud_flag'] = self.submission
+            output = pd.DataFrame({'ID': eval_data['ID'], 'fraud_flag' : self.submission})
+            output.to_csv(Path(ROOT, "data/interim/submission_{time.strftime('%d_%b_%Y_%H_%M_%S')}.csv"), index=True)
+
+        return output
+
 
 
 class GenerateReport():
